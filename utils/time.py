@@ -16,3 +16,7 @@ class Timer:
         if self.t_start is None:
             self.t_start = now
         return (now - self.t_start).total_seconds()
+
+
+def timestamp():
+    return datetime.now().strftime("%Y%m%d%H%M%S")

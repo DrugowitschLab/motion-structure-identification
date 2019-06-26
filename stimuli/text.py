@@ -37,6 +37,7 @@ class Scores:
     def clear(self):
         self.text['score'].set_text('')
         self.text['change'].set_text('')
+        pl.draw()
 
     def update(self):
         if self.frame == self.config['experiment']['post_choice']:

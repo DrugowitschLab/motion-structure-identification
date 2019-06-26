@@ -17,9 +17,9 @@ class Motion:
         self.n = n
         self.fps = self.config['display']['fps']
         self.show_labels = self.config['display']['show_labels']
-        self.t_start = self.config['experiment']['pre_present']
-        self.t_stop = self.config['experiment']['present'] + self.t_start
-        self.frame = 0  # [0, t_start): still; [t_start, t_stop]: play; (t_stop, choose]: still; (choose, +oo): wait
+        self.f_start = self.config['experiment']['pre_present']
+        self.f_stop = self.config['experiment']['present'] + self.f_start
+        self.frame = self.f_stop + 1
         self.times = []  # wall clock times of rendered frames
         self.timer = Timer()  # wall clock time
         self.logger = Logger()
@@ -27,7 +27,7 @@ class Motion:
         self.ax = ax
         self.stimulus, self.plotted_dots, self.plotted_labels, self.plotted_text = [None] * 4
         self.cid = {}
-        self.callback = lambda data: None
+        self.onstart, self.onstop = lambda: None, lambda data: None
         self.colors = self.config['display']['disc_color'].copy()
         self.draw()
 
@@ -67,7 +67,7 @@ class Motion:
         self.ax.set_yticks(np.array([0, 1.0, ]) * self.config['sim']['radial_mean'])
         self.ax.set_yticklabels([])
 
-    def reset(self, preset, seed=None, callback=lambda data: None):
+    def reset(self, preset, seed=None, onstart=lambda: None, onstop=lambda data: None):
         """
         :param preset: {
             B:
@@ -75,30 +75,25 @@ class Motion:
             tau_vphi:
         }
         :param seed:        seed for the numpy random number generator
-        :param is_dev:      if DEVELOPER mode is on
+        :param onstart:
+        :param onstop:
         """
         np.random.shuffle(self.colors)
         self.plotted_dots.set_color(self.plotted_dots.to_rgba(self.colors))
-        self.callback = callback
-        self.plotted_text.set_text('')
-        self.frame = 0
+        self.onstart = onstart
+        self.onstop = onstop
+        self.plotted_text.set_text('Click <left mouse button> or \npress <space> to continue.')
+        self.cid['mouse'] = self.ax.get_figure().canvas.mpl_connect('button_press_event', self.mousedown)
+        self.cid['key'] = self.ax.get_figure().canvas.mpl_connect('key_press_event', self.keydown)
+        self.frame = self.f_stop + 1
         self.times = []
         self.timer.reset()
         from stimuli.stimulus import StructuredMotionStimulus as Stimulus
         self.stimulus = Stimulus(self.config, preset, seed=seed, f_dW=None, phi0=None, is_dev=self.is_dev)
         self.logger.reset(self.stimulus.Phi.copy(), self.stimulus.R.copy())
+        self.advance()
 
-    def update(self):
-        if 0 < self.frame < self.t_start or self.frame > self.t_stop:
-            self.frame += 1
-            return [self.plotted_dots] + self.plotted_labels + [self.plotted_text]
-        t_timer = self.timer.get_seconds()
-        self.times.append(self.timer.get_seconds())  # Store the time of frame drawing
-        if self.frame % int(self.fps) == 0:
-            print(f"   > Wall-clock time: {t_timer:7.3f}s, "
-                  f"simulation time: {self.frame / self.fps:7.3f}s, "
-                  f"frame number: {self.frame:5d}")
-
+    def advance(self):
         self.sim_lock.lock("Error: Plotting update called before sim was ready. Too high fps?")
         # # #  Update the figure with latest data  # # #
         x, y = self.logger.get(self.stimulus.N)
@@ -109,40 +104,40 @@ class Motion:
         self.logger.log(*self.stimulus.advance())  # See class StructuredMotionStimulus in functions.py for dynamics
         self.sim_lock.unlock()
 
-        if self.frame == self.t_stop:
-            self.finish()
+    def update(self):
+        if self.f_start <= self.frame < self.f_stop:
+            t_timer = self.timer.get_seconds()
+            self.times.append(self.timer.get_seconds())  # Store the time of frame drawing
+            if self.frame % int(self.fps) == 0:
+                print(f"   > Wall-clock time: {t_timer:7.3f}s, "
+                      f"simulation time: {self.frame / self.fps:7.3f}s, "
+                      f"frame number: {self.frame:5d}")
+            self.advance()
+        elif self.frame == self.f_stop:
+            self.onstop(self.logger.data)
         self.frame += 1
         # # #  Return the list of variable figure elements (required for blitting)  # # #
         return [self.plotted_dots] + self.plotted_labels + [self.plotted_text]
 
-    def finish(self):
-        print(self.timer.get_seconds())
-        self.callback(self.logger.data)
-
-    def wait(self, callback=lambda: None):
-        self.plotted_text.set_text('Click <left mouse button> or \npress <space> to continue.')
-        self.cid['mouse'] = self.ax.get_figure().canvas.mpl_connect('button_press_event',
-                                                                    lambda event: self.mousedown(event, callback))
-        self.cid['key'] = self.ax.get_figure().canvas.mpl_connect('key_press_event',
-                                                                  lambda event: self.keydown(event, callback))
-
-    def mousedown(self, event, callback=lambda: None):
+    def mousedown(self, event):
         if self.is_dev:
             print(f"<{event.button}> is pressed!")
         from matplotlib.backend_bases import MouseButton
         if event.button == MouseButton.LEFT:
-            self.exit(callback)
+            self.start()
 
-    def keydown(self, event, callback=lambda: None):
+    def keydown(self, event):
         if self.is_dev:
             print(f"<{event.key}> is pressed!")
         if event.key == ' ':
-            self.exit(callback)
+            self.start()
 
-    def exit(self, callback):
+    def start(self):
+        self.plotted_text.set_text('')
         for c in self.cid.values():
             self.ax.get_figure().canvas.mpl_disconnect(c)
-        callback()
+        self.frame = 0
+        self.onstart()
 
 
 class Logger:
