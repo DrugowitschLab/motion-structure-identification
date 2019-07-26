@@ -4,7 +4,7 @@ from scipy.stats import multivariate_normal as multivariate_normal_pdf
 
 # Replace slow scipy permutation by faster own one
 #from sympy.combinatorics import Permutation
-from classPermutation import Permutation
+from johannes_kalman_filter_code.classPermutation import Permutation
 Permutation.secure = False               # Perform type checks on cost of execution speed
 Permutation.print_cyclic = True          # If True, uses the slower sympy implementation for printing
 

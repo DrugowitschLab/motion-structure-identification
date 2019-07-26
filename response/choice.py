@@ -1,16 +1,19 @@
 from utils.time import Timer
+from utils.device_input import Devices
 from response.visual import draw_structure
 from matplotlib.patches import FancyBboxPatch
 import pylab as pl
 
+
 class Choice:
-    def __init__(self, ax, structures, confidence, padding=0.02):
+    def __init__(self, ax, structures, confidence, padding=0.02, visual=True):
         self.ax = ax
         self.timer = Timer()
         self.idx2button = {structure: [] for structure in structures}
         self.button2idx = {}
         self.draw(structures, confidence, padding)
         self.answer, self.cid, self.callback = None, None, lambda data: None
+        self.visual = visual
 
     def draw(self, structures, confidence, padding):
         _, _, w_win, h_win = self.ax.get_window_extent().bounds
@@ -34,6 +37,10 @@ class Choice:
                 y += h + padding
             x += w + padding
 
+        kwargs = dict(ha='right', va='center', fontsize=20, rotation=90)
+        self.ax.text(0, 0.75, 'high', **kwargs)
+        self.ax.text(0, 0.25, 'low', **kwargs)
+
     def reset(self, answer, callback=lambda data: None):
         self.answer = answer
         self.callback = callback
@@ -41,6 +48,7 @@ class Choice:
             button.set_color('gray')
         self.ax.set_visible(True)
         pl.draw()
+        Devices.disable('mouse')
         self.cid = self.ax.get_figure().canvas.mpl_connect('pick_event', lambda event: self.onclick(event))
         self.timer.restart()
 
@@ -55,6 +63,10 @@ class Choice:
             for button in self.idx2button[structure_chosen]:
                 button.set_color('red')
             result = False
+        for button in self.idx2button[self.answer]:
+            button.set_color('green')
+        pl.draw()
+        self.ax.get_figure().canvas.mpl_disconnect(self.cid)  # ignore further mouse clicks
         self.callback({
             'answer': self.answer,
             'choice': structure_chosen,
@@ -62,16 +74,14 @@ class Choice:
             'result': result,
             'rt': self.timer.get_seconds()
         })
-        for button in self.idx2button[self.answer]:
-            button.set_color('green')
-        pl.draw()
-        self.ax.get_figure().canvas.mpl_disconnect(self.cid)  # ignore further mouse clicks
+        Devices.enable('mouse')
         # post callback behaviors:
 
 
 if __name__ == '__main__':
     # unit test
     fig = pl.figure(figsize=(6 * 16 / 9, 6))
+    Devices.init(fig)
     ax = fig.add_axes((0, 0, 1, 1))
     c = Choice(ax, ('IND', 'GLO', 'CLU', 'SDH'), ('low', 'high'), 0.02)
     c.reset('GLO', callback=lambda data: print(data))

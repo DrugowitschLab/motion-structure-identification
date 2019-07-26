@@ -2,8 +2,6 @@ import pylab as pl
 
 
 class Scores:
-    from config import config
-
     arrows = ['(↓1)', '(0)', '(↑1)', '(⇈2)']
     colors = ['red', 'gray', 'green', 'green']
 
@@ -13,7 +11,6 @@ class Scores:
         self.text = {}
         self.draw()
         self.callback = lambda: None
-        self.frame = 0
 
     def draw(self):
         self.ax.axis('off')
@@ -27,7 +24,6 @@ class Scores:
         self.text['score'].set_text(f"score: {self.score:3d}     \ntrials: {idx:3d}/{n_trial:3d} ")
         self.ax.set_visible(True)
         pl.draw()
-        self.frame = 0
 
     def increase(self, change):
         self.text['change'].set_text(f" {self.arrows[change + 1]:4}")
@@ -40,9 +36,6 @@ class Scores:
         pl.draw()
 
     def update(self):
-        if self.frame == self.config['experiment']['post_choice']:
-            self.finish()
-        self.frame += 1
         return []
 
     def finish(self):

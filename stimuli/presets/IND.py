@@ -43,3 +43,5 @@ N = B.shape[0]
 # Target dots to fade out
 targets = [2]
 disc_color = (np.array([1, 3, 5], dtype='float') + 0.5) / 12
+
+print(B @ np.diag(lam))
