@@ -1,9 +1,10 @@
-from config import SimulationConfig as sim
+from config import SimulationConfig as Sim
+from config import ExperimentConfig
 import numpy as np
 
 
 class MotionStructure:
-    def __init__(self, glo, λ_I, volatility_factor=4/3):
+    def __init__(self, glo, λ_I, volatility_factor=Sim.volatility_factor):
         """
         Build motion structure matrix L specified by glo and λ_I
         :param glo: λ_G**2 / (λ_G**2 + λ_C**2)
@@ -18,7 +19,7 @@ class MotionStructure:
             [1, 1, 0, 1, 0, ],  # each row describes one dot (N dots)
             [1, 0, 0, 0, 1, ],  # each column is a motion source (M sources)
         ], dtype=np.float64)
-        λ_T = 2.                                                # total
+        λ_T = ExperimentConfig.λ_T                              # total
         assert 0 <= λ_I <= λ_T, 'Make sure 0 <= λ_I <= λ_T'
         λ_G = np.sqrt(glo) * np.sqrt(max(0., λ_T**2 - λ_I**2))  # global
         λ_C = np.sqrt(max(0., λ_T**2 - λ_G**2 - λ_I**2))        # cluster
@@ -37,7 +38,7 @@ class MotionStructure:
           0 I/τ_ω ]
         """
         F_φ = np.zeros((self.n + self.n_v(), self.n + self.n_v()))
-        F_φ[:self.n, self.n:] = self.L if sim.whiten else np.eye(self.n)
+        F_φ[:self.n, self.n:] = self.L if Sim.whiten else np.eye(self.n)
         F_φ[self.n:, self.n:] = -np.eye(self.n_v()) / self.τ_ω  # Velocities follow an OU process
         return F_φ
 
@@ -50,7 +51,7 @@ class MotionStructure:
           0 I ]
         """
         D_φ = np.zeros((self.n + self.n_v(), self.n + self.m))
-        D_φ[self.n:, self.n:] = np.eye(self.m) if sim.whiten else self.L
+        D_φ[self.n:, self.n:] = np.eye(self.m) if Sim.whiten else self.L
         return D_φ
 
     def build_F_r(self):
@@ -60,8 +61,8 @@ class MotionStructure:
         """
         D_r = np.zeros((self.n + self.n, self.n + self.n))
         I_n = np.eye(self.n)
-        D_r[:self.n, :self.n] = -I_n / sim.τ_r  # Active location decay for stable orbits
-        D_r[self.n:, self.n:] = -I_n / sim.τ_v  # Velocities follow an OU process
+        D_r[:self.n, :self.n] = -I_n / Sim.τ_r  # Active location decay for stable orbits
+        D_r[self.n:, self.n:] = -I_n / Sim.τ_v  # Velocities follow an OU process
         D_r[:self.n, self.n:] = I_n
         return D_r
 
@@ -71,7 +72,7 @@ class MotionStructure:
           0, σ_r*I ]
         """
         D = np.zeros((self.n + self.n, self.n + self.n))
-        D[self.n:, self.n:] = sim.σ_r * np.eye(self.n)  # Velocities follow an OU process
+        D[self.n:, self.n:] = Sim.σ_r * np.eye(self.n)  # Velocities follow an OU process
         return D
 
     def build_b_r(self):
@@ -79,11 +80,11 @@ class MotionStructure:
         [ (μ_r/τ_r)_n 0_n ]
         """
         b = np.zeros(self.n + self.n)
-        b[:self.n] = sim.μ_r / sim.τ_r  # only locations, not velocities
+        b[:self.n] = Sim.μ_r / Sim.τ_r  # only locations, not velocities
         return b
 
     def n_v(self):
-        return self.m if sim.whiten else self.n
+        return self.m if Sim.whiten else self.n
 
     def __str__(self):
         """  Print a preview of the motion structure """

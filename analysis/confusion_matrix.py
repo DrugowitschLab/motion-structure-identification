@@ -3,7 +3,6 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix
-from sklearn.utils.multiclass import unique_labels
 from itertools import product
 from sys import argv
 
@@ -11,37 +10,33 @@ from sys import argv
 labels = ['IND', 'GLO', 'CLU', 'SDH']
 
 
-def draw_matrix(cm, xticks, yticks, normalize=False, cmap=None, title='Confusion Matrix', file_path=""):
-    if len(argv) > 2:
-        f"/home/sichao/Pictures/data/{argv[1]}_{argv[2]}"
+def draw_matrix(cm, xticks, yticks, normalize=False, cmap=None, title='Confusion Matrix', file_path=''):
     if normalize:
         cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
-    thresh = cm.mean()
-
-    plt.imshow(cm, interpolation='nearest', vmin=0, vmax=1, cmap=plt.get_cmap('Blues') if cmap is None else cmap)
+        thresh = 0.7
+        vmin, vmax = 0, 1
+    else:
+        thresh = cm.mean() * 1.5
+        vmin, vmax = cm.min(), cm.max()
+    plt.imshow(cm, interpolation='nearest', vmin=vmin, vmax=vmax,
+               cmap=plt.get_cmap('Blues') if cmap is None else cmap)
     plt.title(title)
     plt.colorbar()
-    plt.xticks(np.arange(len(xticks)), xticks, rotation=45)
+    plt.xticks(np.arange(len(xticks)), xticks)  # , rotation=45)
     plt.yticks(np.arange(len(yticks)), yticks)
 
     for i, j in product(range(cm.shape[0]), range(cm.shape[1])):
-        if normalize:
-            plt.text(j, i, f"{cm[i, j]:0.4f}",
-                     horizontalalignment="center",
-                     color="white" if cm[i, j] > thresh else "black")
-        else:
-            plt.text(j, i, f"{cm[i, j]}",
-                     horizontalalignment="center",
-                     color="white" if cm[i, j] > thresh else "black")
+        plt.text(j, i, f'{cm[i, j]:0.4f}' if normalize else f'{cm[i, j]}',
+                 ha='center', color='white' if cm[i, j] > thresh else 'black')
 
     plt.tight_layout()
-    if file_path == "":
+    if file_path == '':
         plt.show()
     else:
         plt.savefig(file_path)
 
 
-def plot_confusion_matrix(y_true, y_pred, normalize=False):
+def plot_confusion_matrix(y_true, y_pred, normalize=False, file_path=""):
     cm = confusion_matrix(y_true, y_pred, labels=labels)
     print(cm)
     accuracy_rate = np.trace(cm) / float(np.sum(cm))
@@ -51,10 +46,10 @@ def plot_confusion_matrix(y_true, y_pred, normalize=False):
     plt.figure(figsize=(8, 6))
     plt.ylabel('Ground truth')
     plt.xlabel('Choice')
-    draw_matrix(cm, labels, labels, normalize)
+    draw_matrix(cm, labels, labels, normalize, file_path=file_path)
 
 
-def plot_conditional_confusion_matrix(df, x, y1, y2, normalize=False):
+def plot_conditional_confusion_matrix(df, x, y1, y2, normalize=False, file_path=""):
     xticks = x[1]
     yticks = [f'{i}({j})' for i in y1[1] for j in y2[1]]
     cm = np.zeros((len(yticks), len(xticks)), dtype=int)
@@ -67,35 +62,4 @@ def plot_conditional_confusion_matrix(df, x, y1, y2, normalize=False):
     plt.figure(figsize=(6, 8))
     plt.ylabel('Choice')
     plt.xlabel('Ground truth')
-    draw_matrix(cm, xticks, yticks, normalize)
-
-
-def plot_cm(file='sichao/pilot_sichao.dat', mode='marginal', nm=True):
-    data = load_data(f'../data/{file}')
-    answer, choice, confidence = [], [], []
-    for record in data:
-        answer.append(record['answer'])
-        choice.append(record['choice'])
-        confidence.append(record['confidence'])
-    df = pd.DataFrame({'answer': answer, 'choice': choice, 'confidence': confidence})
-    if mode == 'marginal':
-        plot_confusion_matrix(answer, choice, nm)
-    elif mode == 'both':
-        plot_conditional_confusion_matrix(df,
-                                          ('answer', ['IND', 'GLO', 'CLU', 'SDH']),
-                                          ('choice', ['IND', 'GLO', 'CLU', 'SDH']),
-                                          ('confidence', ['low', 'high']), nm)
-    else:
-        plot_confusion_matrix(df[df['confidence'] == argv[2]]['answer'], df[df['confidence'] == argv[2]]['choice'], nm)
-
-
-if __name__ == '__main__':
-    if len(argv) > 2:
-        file = argv[1]
-        mode = argv[2]
-        nm = True if argv[3] == 't' else False
-    else:
-        file = 'sichao/pilot_sichao.dat'
-        mode = 'marginal'
-        nm = True
-    plot_cm(file, mode, nm)
+    draw_matrix(cm, xticks, yticks, normalize, file_path=file_path)

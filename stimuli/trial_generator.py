@@ -6,27 +6,28 @@ from analysis.kalman_filter import apply_filters_on_trial
 import numpy as np
 import pandas as pd
 from analysis.model import fit, predict
+from config import fps
 
 
 structures = ['IND', 'GLO', 'CLU', 'SDH']
 s = ['IND', 'GLO', 'CLU_012', 'CLU_120', 'CLU_201', 'SDH_012', 'SDH_120', 'SDH_201']
 p_structures = [0.25, 0.25, 0.25, 0.25]
-glo_SDH = 2 / 3
-glo_SDH = 0.85
 presets = {'IND': MotionStructure(0, 2),
-           'GLO': MotionStructure(1, 1 / 4),
-           'CLU': MotionStructure(0, 1 / 4),
-           'SDH': MotionStructure(glo_SDH, 1 / 4)}
-p = np.array([0, 0, 0, 1])
+           'GLO': MotionStructure(1, 1/4),
+           'CLU': MotionStructure(0, 1/4),
+           'SDH': MotionStructure(.75, 1/8)}
 rng = np.random.RandomState()
 
 
 def generate_trial(structure, seed=None):
     sim = Sim(structure, seed=seed)
     logger = SimLogger()
-    logger.reset(sim.φ.copy(), sim.r.copy())
+    logger.reset()
+    t = 0
     for frame in range(ExperimentConfig.delay, ExperimentConfig.duration + 1):
-        logger.log(*sim.advance())
+        logger.log(t, sim.φ.copy(), sim.r.copy())
+        sim.advance()
+        t += 0.02
     return logger.data
 
 
@@ -38,11 +39,11 @@ def generate_trials(n_trials=200, file=None, σ_R=1.0):
         ground_truth = []
         for i in range(n_trials):
             print(i)
-            structure = rng.choice(structures, p=p)
+            structure = rng.choice(structures, p=p_structures)
             data = generate_trial(presets[structure])
             t = data['t']
             x = data['φ']
-            vals.append(np.array(apply_filters_on_trial(x, t, σ_R, glo_SDH)))
+            vals.append(np.array(apply_filters_on_trial(x, t, σ_R, presets)))
             ground_truth.append(structure)
         df = pd.DataFrame(vals, columns=s)
         df['ground_truth'] = ground_truth
@@ -70,6 +71,7 @@ if __name__ == '__main__':
 
     from analysis.model import plot_prediction
     plot_prediction(
-                    generate_trials(200, σ_R=0.1),
-                    # file='../data/pilot_1e-1.csv',
-                    𝜃=np.array([0, 0.1, 0, 0, 0]))
+        generate_trials(200, σ_R=1),
+        # file='../data/pilot_1e-1.csv',
+        𝜃=np.array([0.03932783,0.40933681,0.4540972,-0.9818154,-3.70573406])
+    )

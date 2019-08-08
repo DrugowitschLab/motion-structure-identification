@@ -48,20 +48,15 @@ class StructuredMotionSimulation(object):
         self.n = n
 
         # # #  simulation time  # # #
-        self.t = 0
         self.dt = 1. / sim.dt / fps  # number of integration steps per frame
         assert np.isclose(self.dt, round(self.dt))  # should be integer valued
         self.dt = round(self.dt)
 
     # # #  Euler integration # # #
-    def advance(self, t=None):
+    def advance(self):
         for tn in range(self.dt):
             self.φ += self.dφ(x=self.φ, F=self.F_φ, D=self.D_φ)
             self.φ[:self.n] = self.φ[:self.n] % (2 * np.pi)    # circular motion --> wrap locations to [0, 2*pi)
             self.r += self.dr(x=self.r, F=self.F_r, D=self.D_r, b=self.b_r)
             self.r[:self.n] = np.maximum(0., self.r[:self.n])  # No negative radii allowed
-        if t:
-            self.t = t
-        else:
-            self.t += sim.dt * self.dt
-        return self.t, self.φ.copy(), self.r.copy()
+        return self.φ, self.r

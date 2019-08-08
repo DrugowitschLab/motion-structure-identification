@@ -44,15 +44,29 @@ def dat2csv(file, keys):
             writer.writerow({key: trial[key] for key in keys})
 
 
+def modify(old_file, new_file, key=None, val_mapper={}, key_mapper={}):
+    with open(old_file, 'rb') as fin, open(new_file, 'wb') as fout:
+        while True:
+            try:
+                trial = pickle.load(fin)
+                if key is not None:
+                    trial[key] = val_mapper[trial[key]]
+                for old_key in key_mapper:
+                    trial[key_mapper[old_key]] = trial.pop(old_key)
+                pickle.dump(trial, fout)
+            except EOFError:
+                break
+
+
 class SimLogger:
     def __init__(self):
         self.data = {}
 
-    def reset(self, φ, r):
-        self.data = dict(  # Store stimulus history (unless INFRUN)
-            t=[0],         # time points of frames (in sim time)
-            φ=[φ],     # Angular locations and velocities for all N dots
-            r=[r],         # Radial locations and velocities for all N dots
+    def reset(self):
+        self.data = dict(  # Store stimulus history
+            t=[],          # time points of frames (in sim time)
+            φ=[],          # Angular locations and velocities for all dots
+            r=[],          # Radial locations and velocities for all dots
         )
 
     def log(self, t, φ, r):
@@ -60,12 +74,17 @@ class SimLogger:
         self.data['φ'].append(φ)
         self.data['r'].append(r)
 
-    def get(self, n):
-        return self.data['φ'][-1][:n], self.data['r'][-1][:n]
-
 
 if __name__ == '__main__':
-    file = '../data/sichao_20190726135416.dat'
-    dat2csv(file, ['answer', 'choice', 'confidence'])
-
+    modify('../data/exp2/sichao_0802.old.dat', '../data/exp2/sichao_0802.dat', key='answer', val_mapper={
+        'CS0': '0.00',
+        'CS1': '0.20',
+        'CS2': '0.35',
+        'CS3': '0.55',
+        'CS4': '0.75',
+    }, key_mapper={
+        'answer': 'ground_truth',
+        # 'phi': 'φ'
+    })
+    print(load_data('../data/exp2/sichao_0802.dat')[0].keys())
 

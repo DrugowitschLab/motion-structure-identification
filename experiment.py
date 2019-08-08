@@ -1,5 +1,4 @@
-from config import fps, dev, DisplayConfig
-from stimuli.motion_structure import MotionStructure
+from config import fps, DisplayConfig
 import numpy as np
 import pylab as pl
 import matplotlib as mpl
@@ -9,20 +8,17 @@ from utils.device_input import Cursor, Devices
 
 
 class Experiment:
-    structures = ('IND', 'GLO', 'CLU', 'SDH')
-    # p_structures = [0.25, 0.25, 0.25, 0.25]
-    p_structures = [0, 1/3, 1/3, 1/3]
-    glo_SDH = 0.80  # 2/3
-    presets = {'IND': MotionStructure(0, 2),
-               'GLO': MotionStructure(1, 1 / 4),
-               'CLU': MotionStructure(0, 1 / 4),
-               'SDH': MotionStructure(glo_SDH, 1 / 4)}
-    confidence = ('low', 'high')
-    conf_score = {'low': {True: 1, False: 0}, 'high': {True: 2, False: -1}}
+    directory = 'data/'
+    structures = ()
+    p_structures = []
+    presets = {}
+    confidence = ()
+    confidence_score = {'low': {True: 0, False: 0}, 'high': {True: 0, False: 0}}
 
-    def __init__(self, file, n_trials, n_repetition, is_fullscreen=False, seed_file=None):
+    def __init__(self, pid, n_trials, n_repetition=1, is_fullscreen=True, seed_file=None):
+        file = f'{self.directory}/{pid}_{timestamp()}.dat'
         self.n_trials, self.n_repetition = n_trials, n_repetition
-        self.fig, self.ax, self.motion, self.choice, self.scores, self.seeds, self.structure = [None] * 7
+        self.fig, self.ax, self.motion, self.choice, self.scores, self.seeds, self.structure, self.truth = [None] * 8
         self.tasks = []
         self.idx = 0
         self.logger = Logger(file)
@@ -47,6 +43,7 @@ class Experiment:
         mpl.rc("figure", dpi=DisplayConfig.monitor_dpi)  # set monitor dpi
         self.fig = pl.figure(figsize=DisplayConfig.figsize)
         self.fig.canvas.set_window_title("Motion Structure Identification Task")
+        self.fig.canvas.window().statusBar().setVisible(False)
         self.fig.set_facecolor(DisplayConfig.bg_color)
         if is_fullscreen:
             manager = pl.get_current_fig_manager()
@@ -59,16 +56,16 @@ class Experiment:
         Devices.enable('escape', self.finish)
 
     def create_axes(self):
-        choice_coords = [(0.64, 0.01, 0.35, 0.48), (0.01, 0.01, 0.35, 0.48)]
         self.ax = {
             'motion': self.fig.add_axes((0.01, 0.01, 0.98, 0.98), projection='polar'),
-            'choice': self.fig.add_axes(choice_coords[0]),
+            'choice': self.fig.add_axes((0.64, 0.01, 0.35, 0.48)),
             'scores': self.fig.add_axes((0.64, 0.71, 0.35, 0.28))
         }
 
     def create_counterbalance(self, n_rep, seeds_file=None):
         if seeds_file:
             self.seeds = load_data(seeds_file, 'seed')
+            self.truth = load_data(seeds_file, 'answer')
         else:
             n_unique = self.n_trials // n_rep
             max_seed = np.iinfo(np.uint32).max
@@ -101,38 +98,43 @@ class Experiment:
         seed = self.seeds[self.idx]
         self.logger.log({'seed': seed})
         rng = np.random.RandomState(seed=seed)
-        self.structure = rng.choice(self.structures, p=self.p_structures)
         color_permutation = [[0, 1, 2], [1, 2, 0], [2, 0, 1]][rng.randint(3)]
-        self.motion.reset(preset=self.presets[self.structure],
-                          seed=seed,
-                          onstart=lambda: self.motion_start(),
-                          onstop=lambda data: self.motion_stop(data),
-                          color_permutation=color_permutation)
         self.logger.log({'permutation': color_permutation})
-        self.idx += 1
+        if self.truth is not None:
+            self.structure = self.truth[self.idx]
+        else:
+            self.structure = rng.choice(self.structures, p=self.p_structures)
+        print(self.structure)
+        structure_obj = self.presets[self.structure]
+        print(structure_obj)
 
-    def motion_start(self):
+        self.motion.reset(preset=structure_obj,
+                          seed=seed,
+
+                          onstop=self.motion_stop,
+                          onfinish=self.next_trial,
+                          color_permutation=color_permutation)
         self.ax['choice'].set_visible(False)
         self.ax['scores'].set_visible(False)
         self.tasks.remove(self.choice)
         self.scores.clear()
 
+        self.idx += 1
+
     def motion_stop(self, data):
         Cursor.reset_mouse_position()
         Cursor.set_visible(True)
         self.logger.log(data)
-        self.choice.reset(self.structure, lambda data: self.choice_made(data))
+        self.choice.reset(self.structure, self.choice_made)
         self.tasks.append(self.choice)
 
     def choice_made(self, data):
-        if dev:
-            print(data['rt'])
         Cursor.set_visible(False)
+        self.motion.prompt()
         self.logger.log(data)
         self.logger.dump()
-        self.scores.increase(self.conf_score[data['confidence']][data['result']])
+        self.scores.increase(self.confidence_score[data['confidence']][data['result']])
         self.scores.reset(self.idx, self.n_trials)
-        self.next_trial()
 
     def update(self, frame):
         return [objects for task in self.tasks for objects in task.update()]
@@ -145,11 +147,3 @@ class Experiment:
             print(" > Done. Figure window will be closed.")
             pl.close(self.fig)
         exit(0)
-
-
-if __name__ == '__main__':
-    pid = 'sichao'
-    file = f'data/{pid}_{timestamp()}.dat'
-    import os
-    assert not os.path.exists(os.path.join('data', file)), f'{file} already exists'
-    exp = Experiment(file, 200, 2, True)

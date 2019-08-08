@@ -12,7 +12,7 @@ class Choice:
         self.idx2button = {structure: [] for structure in structures}
         self.button2idx = {}
         self.draw(structures, confidence, padding)
-        self.answer, self.cid, self.callback = None, None, lambda data: None
+        self.ground_truth, self.cid, self.callback = None, None, lambda data: None
         self.visual = visual
 
     def draw(self, structures, confidence, padding):
@@ -25,24 +25,24 @@ class Choice:
         w = (wh_ratio - padding * (n_col + 1)) / n_col
         h = (1 - padding * (n_row + 1)) / n_row
 
-        x = padding
-        for c in range(n_col):
-            y = padding
-            for r in range(n_row):
+        label_kwargs = dict(fontsize=20)
+        y = padding
+        for r in range(n_row):
+            self.ax.text(0, y + h / 2, confidence[r], ha='right', va='center', rotation=90, **label_kwargs)
+            x = padding
+            for c in range(n_col):
+                if r == 0:
+                    self.ax.text(x + w / 2, 1, structures[c], ha='center', va='bottom', **label_kwargs)
                 draw_structure(self.ax, (x + padding, y + padding, w - padding * 2, h - padding * 2), structures[c])
                 button = FancyBboxPatch((x, y), w, h, boxstyle='round,pad=0', alpha=0.2, color='gray', picker=True)
                 self.button2idx[button] = (structures[c], confidence[r])
                 self.idx2button[structures[c]].append(button)
                 self.ax.add_patch(button)
-                y += h + padding
-            x += w + padding
+                x += w + padding
+            y += h + padding
 
-        kwargs = dict(ha='right', va='center', fontsize=20, rotation=90)
-        self.ax.text(0, 0.75, 'high', **kwargs)
-        self.ax.text(0, 0.25, 'low', **kwargs)
-
-    def reset(self, answer, callback=lambda data: None):
-        self.answer = answer
+    def reset(self, ground_truth, callback=lambda data: None):
+        self.ground_truth = ground_truth
         self.callback = callback
         for button in self.button2idx:
             button.set_color('gray')
@@ -57,18 +57,24 @@ class Choice:
 
     def onclick(self, event):
         structure_chosen, confidence_chosen = self.button2idx[event.artist]
-        if structure_chosen == self.answer:
+        if self.ground_truth in self.idx2button:
+            if structure_chosen == self.ground_truth:
+                result = True
+            else:
+                for button in self.idx2button[structure_chosen]:
+                    button.set_color('red')
+                result = False
+            for button in self.idx2button[self.ground_truth]:
+                button.set_color('green')
+            pl.draw()
+        else:  # experiment 2
             result = True
-        else:
             for button in self.idx2button[structure_chosen]:
-                button.set_color('red')
-            result = False
-        for button in self.idx2button[self.answer]:
-            button.set_color('green')
-        pl.draw()
+                button.set_color('blue')
+            pl.draw()
         self.ax.get_figure().canvas.mpl_disconnect(self.cid)  # ignore further mouse clicks
         self.callback({
-            'answer': self.answer,
+            'ground_truth': self.ground_truth,
             'choice': structure_chosen,
             'confidence': confidence_chosen,
             'result': result,
