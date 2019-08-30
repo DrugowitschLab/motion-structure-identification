@@ -110,7 +110,6 @@ class Experiment:
 
         self.motion.reset(preset=structure_obj,
                           seed=seed,
-
                           onstop=self.motion_stop,
                           onfinish=self.next_trial,
                           color_permutation=color_permutation)

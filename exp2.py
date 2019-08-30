@@ -29,5 +29,5 @@ if __name__ == '__main__':
     if len(argv) > 1:
         exp = Exp2(argv[1], 100)
     else:
-        exp = Exp2('sichao', 100)
+        exp = Exp2('presentation', 100, is_fullscreen=False)
 

@@ -76,15 +76,23 @@ class SimLogger:
 
 
 if __name__ == '__main__':
-    modify('../data/exp2/sichao_0802.old.dat', '../data/exp2/sichao_0802.dat', key='answer', val_mapper={
-        'CS0': '0.00',
-        'CS1': '0.20',
-        'CS2': '0.35',
-        'CS3': '0.55',
-        'CS4': '0.75',
-    }, key_mapper={
-        'answer': 'ground_truth',
-        # 'phi': 'φ'
-    })
-    print(load_data('../data/exp2/sichao_0802.dat')[0].keys())
+    # modify('../data/exp2/sichao_0802.old.dat', '../data/exp2/sichao_0802.dat', key='answer', val_mapper={
+    #     'CS0': '0.00',
+    #     'CS1': '0.20',
+    #     'CS2': '0.35',
+    #     'CS3': '0.55',
+    #     'CS4': '0.75',
+    # }, key_mapper={
+    #     'answer': 'ground_truth',
+    #     # 'phi': 'φ'
+    # })
+    # print(load_data('../data/exp2/sichao_0802.dat')[0].keys())
 
+    logger = Logger('../data/exp2/7655.dat')
+    seed_last = 0
+    for trial in load_data('../data/exp2/7765_20190822165041.dat'):
+        seed = trial['seed']
+        if seed != seed_last:
+            logger.log(trial)
+            logger.dump()
+    logger.close()

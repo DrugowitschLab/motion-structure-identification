@@ -4,7 +4,7 @@ import numpy as np
 
 
 class MotionStructure:
-    def __init__(self, glo, λ_I, volatility_factor=Sim.volatility_factor):
+    def __init__(self, glo, λ_I, volatility_factor=Sim.volatility_factor, permutation=[0, 1, 2]):
         """
         Build motion structure matrix L specified by glo and λ_I
         :param glo: λ_G**2 / (λ_G**2 + λ_C**2)
@@ -18,7 +18,7 @@ class MotionStructure:
             [1, 1, 1, 0, 0, ],  # MOTION STRUCTURE COMPONENT MATRIX
             [1, 1, 0, 1, 0, ],  # each row describes one dot (N dots)
             [1, 0, 0, 0, 1, ],  # each column is a motion source (M sources)
-        ], dtype=np.float64)
+        ], dtype=np.float64)[permutation]
         λ_T = ExperimentConfig.λ_T                              # total
         assert 0 <= λ_I <= λ_T, 'Make sure 0 <= λ_I <= λ_T'
         λ_G = np.sqrt(glo) * np.sqrt(max(0., λ_T**2 - λ_I**2))  # global
@@ -114,3 +114,9 @@ def asciiL(L, indent=0):
         s += indent + "│" + "".join([char(v) * 2 for v in line]) + "│\n"
     s += indent + "└" + "─" * (2 * L.shape[1]) + "┘"
     return s
+
+
+if __name__ == '__main__':
+    print(MotionStructure(3/4, 1/4, permutation=[0, 1, 2]))
+    print(MotionStructure(3/4, 1/4, permutation=[1, 2, 0]))
+    print(MotionStructure(3/4, 1/4, permutation=[2, 0, 1]))

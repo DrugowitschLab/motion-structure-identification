@@ -4,7 +4,6 @@ from utils.lock import Lock
 from utils.device_input import Devices
 from utils.data import SimLogger
 import numpy as np
-import pylab as pl
 from datetime import datetime
 __authors__ = "Johannes Bill & Sichao Yang"
 __contact__ = "sichao@cs.wisc.edu"
@@ -91,6 +90,8 @@ class Motion:
 
     def prompt(self, text='Click <left mouse button> or \npress <space> to continue.'):
         self.plotted_text.set_text(text)
+        for key in self.trigger_keys:
+            Devices.enable(key, self.start)
 
     def skip(self):
         self.frame = ExperimentConfig.duration
@@ -98,8 +99,6 @@ class Motion:
     def wait(self):
         if self.first_trial:
             self.prompt()
-        for key in self.trigger_keys:
-            Devices.enable(key, self.start)
 
     def start(self, x=None, y=None):
         self.plotted_text.set_text('')

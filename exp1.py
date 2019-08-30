@@ -22,4 +22,4 @@ if __name__ == '__main__':
     if len(argv) > 1:
         exp = Exp1(argv[1], 200, 2)
     else:
-        exp = Exp1('sichao', 200, 2)
+        exp = Exp1('presentation', 200, 2, is_fullscreen=False)
