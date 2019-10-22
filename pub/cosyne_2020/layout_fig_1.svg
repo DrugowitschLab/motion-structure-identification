@@ -15,7 +15,10 @@
    id="svg2"
    version="1.1"
    inkscape:version="0.92.3 (2405546, 2018-03-11)"
-   sodipodi:docname="layout_fig_1.svg">
+   sodipodi:docname="layout_fig_1.svg"
+   inkscape:export-filename="/home/bill/teaching/hms/sichao_yang/github/pub/cosyne_2020/layout_fig_1.png"
+   inkscape:export-xdpi="600"
+   inkscape:export-ydpi="600">
   <defs
      id="defs4">
     <marker
@@ -348,9 +351,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="1"
      inkscape:pageshadow="2"
-     inkscape:zoom="11.2"
-     inkscape:cx="629.37267"
-     inkscape:cy="5.2393863"
+     inkscape:zoom="3.959798"
+     inkscape:cx="449.63997"
+     inkscape:cy="42.982591"
      inkscape:document-units="pt"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -762,7 +765,7 @@
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.49999952px;font-family:Arial;-inkscape-font-specification:Arial;letter-spacing:0px;stroke-width:0.93749982px">Bayes model #N2</tspan></text>
     <path
        style="opacity:1;vector-effect:none;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.625;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker-end:url(#Arrow2Mend)"
-       d="M 548.03031,1038.8672 V 965.35463"
+       d="M 548.02994,1038.8672 V 969.81735"
        id="path3777"
        inkscape:connector-curvature="0" />
     <path
@@ -773,14 +776,14 @@
     <text
        xml:space="preserve"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12.49999809px;line-height:1000%;font-family:Arial;-inkscape-font-specification:Arial;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:-3.09374952px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.93749988px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       x="551.52814"
+       x="538.40314"
        y="1049.8043"
        id="text3721-3-3"><tspan
          sodipodi:role="line"
          id="tspan3719-6-9"
-         x="551.52814"
+         x="538.40314"
          y="1049.8043"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.49999952px;font-family:Arial;-inkscape-font-specification:Arial;letter-spacing:0px;stroke-width:0.93749988px">log p(structure | observed scene)</tspan></text>
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:7.49999952px;font-family:Arial;-inkscape-font-specification:Arial;letter-spacing:0px;stroke-width:0.93749988px">log p( S | scene) - log p( not S | scene)</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12.49999714px;line-height:1000%;font-family:Arial;-inkscape-font-specification:Arial;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:-3.09374928px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.93749982px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
