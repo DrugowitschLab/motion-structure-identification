@@ -1,3 +1,6 @@
+scikit-learn
+matplotlib
 numpy
 pandas
 PyQt5
+scipy

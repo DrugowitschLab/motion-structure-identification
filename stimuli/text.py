@@ -1,12 +1,13 @@
+from task import Task
 import pylab as pl
 
 
-class Scores:
+class Scores(Task):
     arrows = ['(↓1)', '(0)', '(↑1)', '(⇈2)']
     colors = ['red', 'gray', 'green', 'green']
 
     def __init__(self, ax):
-        self.ax = ax
+        super().__init__(ax)
         self.score = 0
         self.text = {}
         self.draw()

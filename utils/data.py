@@ -3,11 +3,11 @@ import csv
 
 
 class Logger:
-    def __init__(self, file):
+    def __init__(self, file: str):
         self.f = open(file, 'wb+')
         self.data = {}
 
-    def log(self, d):
+    def log(self, d: dict):
         self.data.update(d)
 
     def dump(self):
@@ -17,7 +17,7 @@ class Logger:
         self.f.close()
 
 
-def load_data(file, key=None):
+def load_data(file, key: str = None) -> list:
     data = []
     with open(file, 'rb') as f:
         while True:
@@ -30,8 +30,7 @@ def load_data(file, key=None):
         for trial in data:
             vals.append(trial[key])
         return vals
-    else:
-        return data
+    return data
 
 
 def dat2csv(file, keys):

@@ -1,3 +1,4 @@
+from task import Task
 from utils.time import Timer
 from utils.device_input import Devices
 from response.visual import draw_structure
@@ -5,8 +6,9 @@ from matplotlib.patches import FancyBboxPatch
 import pylab as pl
 
 
-class Choice:
+class Choice(Task):
     def __init__(self, ax, structures, confidence, padding=0.02, visual=True):
+        super().__init__(ax)
         self.ax = ax
         self.timer = Timer()
         self.idx2button = {structure: [] for structure in structures}
@@ -34,7 +36,7 @@ class Choice:
                 if r == 0:
                     self.ax.text(x + w / 2, 1, structures[c], ha='center', va='bottom', **label_kwargs)
                 draw_structure(self.ax, (x + padding, y + padding, w - padding * 2, h - padding * 2), structures[c])
-                button = FancyBboxPatch((x, y), w, h, boxstyle='round,pad=0', alpha=0.2, color='gray', picker=True)
+                button = FancyBboxPatch((x, y), w, h, boxstyle='Round,pad=0,rounding_size=0.05', alpha=0.2, color='gray', lw=4, picker=True)
                 self.button2idx[button] = (structures[c], confidence[r])
                 self.idx2button[structures[c]].append(button)
                 self.ax.add_patch(button)
@@ -85,10 +87,9 @@ class Choice:
 
 
 if __name__ == '__main__':
-    # unit test
     fig = pl.figure(figsize=(6 * 16 / 9, 6))
     Devices.init(fig)
     ax = fig.add_axes((0, 0, 1, 1))
-    c = Choice(ax, ('IND', 'GLO', 'CLU', 'SDH'), ('low', 'high'), 0.02)
+    c = Choice(ax, ('I', 'G', 'C', 'H'), ('low', 'high'), 0.02)
     c.reset('GLO', callback=lambda data: print(data))
     pl.show()

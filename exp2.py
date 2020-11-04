@@ -1,14 +1,14 @@
+from os.path import join
 from experiment import Experiment
 from stimuli.motion_structure import MotionStructure
 from config import ExperimentConfig
 
 
 class Exp2(Experiment):
-    directory = 'data/exp2'
-    structures = ('CLU', 'SDH')
+    directory = join(Experiment.directory, 'exp2')
+    structures = ['C', 'H']
     presets = {f'{g:.2f}': MotionStructure(g, ExperimentConfig.λ_I) for g in ExperimentConfig.glo_exp2}
-    confidence = ('low', 'high')
-    confidence_score = {'low': {True: 0, False: 0}, 'high': {True: 0, False: 0}}
+    confidence_score = {(True, 'high'): 0, (True, 'low'): 0, (False, 'low'): 0, (False, 'high'): 0}
 
     def create_axes(self):
         self.ax = {
@@ -27,7 +27,7 @@ class Exp2(Experiment):
 if __name__ == '__main__':
     from sys import argv
     if len(argv) > 1:
-        exp = Exp2(argv[1], 100)
+        exp = Exp2(argv[1], ExperimentConfig.n_trials_exp2)
     else:
         exp = Exp2('presentation', 100, is_fullscreen=False)
 

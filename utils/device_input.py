@@ -1,5 +1,7 @@
-from config import dev
+from typing import Dict
+from config import verbose
 from matplotlib import get_backend
+import pylab as pl
 
 
 class Cursor:
@@ -28,13 +30,10 @@ class Cursor:
 
 
 class Devices:
-    fig = None
-    callback = {}
-    """ mapping from buttons/keys to callback functions """
-    mid = None
-    """ button_press_event callback id """
-    kid = None
-    """ key_press_event callback id """
+    fig: pl.Figure
+    callback: Dict[str, callable] = {}  # mapping from buttons/keys to callback functions
+    mid: int = None                     # mouse ``button_press_event`` callback id
+    kid: int = None                     # keyboard ``key_press_event`` callback id
 
     @staticmethod
     def init(fig):
@@ -45,9 +44,9 @@ class Devices:
     @staticmethod
     def enable(button, callback=None):
         if button == 'mouse':
-            Devices.mid = Devices.fig.canvas.mpl_connect('button_press_event', lambda event: Devices.mousedown(event))
+            Devices.mid = Devices.fig.canvas.mpl_connect('button_press_event', Devices.mousedown)
         elif button == 'key':
-            Devices.kid = Devices.fig.canvas.mpl_connect('key_press_event', lambda event: Devices.keydown(event))
+            Devices.kid = Devices.fig.canvas.mpl_connect('key_press_event', Devices.keydown)
         Devices.callback[button] = callback
 
     @staticmethod
@@ -60,14 +59,14 @@ class Devices:
 
     @staticmethod
     def mousedown(event):
-        if dev:
+        if verbose:
             print(f'Pressed <{event.button}> @ ({event.xdata:.4f},{event.ydata:.4f})')
         if event.button in Devices.callback:
             Devices.callback[event.button](event.xdata, event.ydata)
 
     @staticmethod
     def keydown(event):
-        if dev:
+        if verbose:
             print(f'Pressed <{event.key}>')
         if event.key in Devices.callback:
             Devices.callback[event.key]()

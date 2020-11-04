@@ -1,8 +1,10 @@
-from config import fps, dev, SimulationConfig, DisplayConfig, ExperimentConfig
+from config import fps, DisplayConfig, ExperimentConfig
+from task import Task
 from utils.time import Timer
 from utils.lock import Lock
 from utils.device_input import Devices
 from utils.data import SimLogger
+
 import numpy as np
 from datetime import datetime
 __authors__ = "Johannes Bill & Sichao Yang"
@@ -10,37 +12,38 @@ __contact__ = "sichao@cs.wisc.edu"
 __date__ = datetime(2019, 6, 10)
 
 
-class Motion:
+class Motion(Task):
     from matplotlib.backend_bases import MouseButton
     trigger_keys = [' ', MouseButton.LEFT]
     first_trial = True
     show_structure = False
 
-    def __init__(self, ax, n_dots):
-        self.n_dots = n_dots
+    def __init__(self, ax):
+        super().__init__(ax)
+        self.n_dots = ExperimentConfig.n_dots
         self.frame = ExperimentConfig.duration + 1
         self.timer = Timer()  # wall clock time
         self.logger = SimLogger()
         self.sim_lock = Lock()  # A "lock" for security
         self.sim, self.plotted_dots, self.plotted_labels, self.plotted_text = [None] * 4
         self.onstart, self.onstop, self.onfinish = lambda: None, lambda data: None, lambda: None
-        self.draw(ax)
+        self.draw()
 
-    def draw(self, ax):
+    def draw(self):
         """ Initializes plot """
         x, y = np.zeros(self.n_dots), np.ones(self.n_dots)
         # # #  Plot the dots  # # #
-        self.plotted_dots = ax.scatter(x, y, **DisplayConfig.dots_kwargs)
+        self.plotted_dots = self.ax.scatter(x, y, **DisplayConfig.dots_kwargs)
         self.plotted_dots.set_visible(True)  # Initially dots are invisible
         # # #  Plot the labels  # # #
-        self.plotted_labels = [ax.text(xn, yn, str(n + 1), **DisplayConfig.label_kwargs)
+        self.plotted_labels = [self.ax.text(xn, yn, str(n + 1), **DisplayConfig.label_kwargs)
                                for n, (xn, yn) in enumerate(zip(x, y))]
         # # #  Plot the text instructions  # # #
-        self.plotted_text = ax.text(0, 0, '', weight='bold', size='14', ha='center')
+        self.plotted_text = self.ax.text(0, 0, '', weight='bold', size='14', ha='center')
         # # #  Axes range and decoration  # # #
-        DisplayConfig.config_ax(ax)
+        DisplayConfig.config_ax(self.ax)
 
-    def reset(self, preset, seed=None, color_permutation=[0, 1, 2],
+    def reset(self, preset, seed=None, color_permutation=np.arange(ExperimentConfig.n_dots),
               onstart=lambda: None, onstop=lambda data: None, onfinish=lambda: None):
         self.onstart = onstart
         self.onstop = onstop

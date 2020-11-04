@@ -23,18 +23,18 @@ def draw_structure(ax, bbox, structure, zorder=0):
 
 
 nodes = {
-    'IND': lambda r, h:
+    'I': lambda r, h:
         [[(r, r), (r * 5, r), (r * 9, r)],
          [(r, h), (r * 5, h), (r * 9, h)]],
-    'GLO': lambda r, h:
+    'G': lambda r, h:
         [[(r, r), (r * 5, r), (r * 9, r)],
          [(r * 5, r + h / 2)],
          [(r * 5, h)]],
-    'CLU': lambda r, h:
+    'C': lambda r, h:
         [[(r, r), (r * 5, r), (r * 9, r)],
          [(r * 3, r + h / 2)],
          [(r * 3, h), (r * 9, h)]],
-    'SDH': lambda r, h:
+    'H': lambda r, h:
         [[(r, r), (r * 5, r), (r * 9, r)],
          [(r * 3, r + h / 3)],
          [(r * 6, r + h * 2 / 3)],
@@ -42,15 +42,15 @@ nodes = {
 }
 
 edges = {
-    'IND': lambda c:
+    'I': lambda c:
         [(c[0][0], c[1][0]), (c[0][1], c[1][1]), (c[0][2], c[1][2])],
-    'GLO': lambda c:
+    'G': lambda c:
         [(c[0][0], c[1][0]), (c[0][1], c[1][0]), (c[0][2], c[1][0]),
          (c[1][0], c[2][0])],
-    'CLU': lambda c:
+    'C': lambda c:
         [(c[0][0], c[1][0]), (c[0][1], c[1][0]),
          (c[1][0], c[2][0]), (c[0][2], c[2][1])],
-    'SDH': lambda c:
+    'H': lambda c:
         [(c[0][0], c[1][0]), (c[0][1], c[1][0]),
          (c[1][0], c[2][0]), (c[0][2], c[2][0]),
          (c[2][0], c[3][0])],
@@ -60,8 +60,8 @@ if __name__ == '__main__':
     # unit test
     import matplotlib.pyplot as plt
     fig, ax = plt.subplots(figsize=(3,5))
-    ax.text(0.15, -0.05, 'CLU', ha='center', va='top', fontsize=24)
-    draw_structure(ax, (0, 0, 0.3, 0.5), 'CLU')
+    ax.text(0.15, -0.05, 'C', ha='center', va='top', fontsize=24)
+    draw_structure(ax, (0, 0, 0.3, 0.5), 'C')
     # ax.text(0.55, -0.05, 'GLO', ha='center', va='top')
     # draw_structure(ax, (0.4, 0, 0.3, 0.5), 'GLO')
     # ax.text(0.95, -0.05, 'CLU', ha='center', va='top')

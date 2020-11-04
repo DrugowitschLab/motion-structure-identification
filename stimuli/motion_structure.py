@@ -14,20 +14,21 @@ class MotionStructure:
         :param volatility_factor: a coefficient that makes stimulus changes faster without affecting the covariance
         :type volatility_factor: float
         """
-        B = np.array([
-            [1, 1, 1, 0, 0, ],  # MOTION STRUCTURE COMPONENT MATRIX
-            [1, 1, 0, 1, 0, ],  # each row describes one dot (N dots)
+        C = np.array([
+            [1, 1, 1, 0, 0, ],  # MOTION STRUCTURE COMPOSITION MATRIX
+            [1, 1, 0, 1, 0, ],  # each row describes one dot (K dots)
             [1, 0, 0, 0, 1, ],  # each column is a motion source (M sources)
         ], dtype=np.float64)[permutation]
         λ_T = ExperimentConfig.λ_T                              # total
         assert 0 <= λ_I <= λ_T, 'Make sure 0 <= λ_I <= λ_T'
-        λ_G = np.sqrt(glo) * np.sqrt(max(0., λ_T**2 - λ_I**2))  # global
-        λ_C = np.sqrt(max(0., λ_T**2 - λ_G**2 - λ_I**2))        # cluster
-        λ_M = np.sqrt(max(0., λ_T**2 - λ_G**2))                 # maverick
+        λ_G = np.sqrt(glo) * np.sqrt(max(0., λ_T**2 - λ_I**2))  # global component
+        λ_C = np.sqrt(max(0., λ_T**2 - λ_G**2 - λ_I**2))        # cluster component
+        λ_M = np.sqrt(max(0., λ_T**2 - λ_G**2))                 # maverick component
         λ = np.sqrt(volatility_factor) * np.array([λ_G, λ_C, λ_I, λ_I, λ_M])
-        self.L = B @ np.diag(λ)
+        self.L = C @ np.diag(λ)
         self.n, self.m = self.L.shape
         self.τ_ω = 2. / volatility_factor
+        self.Σ = self.τ_ω / 2 * self.L @ self.L.T
 
     def build_F_φ(self):
         """ Angular drift
@@ -88,12 +89,10 @@ class MotionStructure:
 
     def __str__(self):
         """  Print a preview of the motion structure """
-        Σ = self.τ_ω / 2 * self.L @ self.L.T
-        print(Σ)
         return (" > Motion structure matrix L:\n"
                 f"{asciiL(self.L, 3)}\n"
                 " > Velocity covariance matrix:\n"
-                f"{asciiL(Σ, 3)}")
+                f"{asciiL(self.Σ, 3)}")
 
 
 def asciiL(L, indent=0):

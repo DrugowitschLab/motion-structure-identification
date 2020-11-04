@@ -10,7 +10,7 @@ presets = {
     'IND': MotionStructure(1, ExperimentConfig.λ_T),
     'GLO': MotionStructure(1, ExperimentConfig.λ_I),
     'CLU': MotionStructure(0, ExperimentConfig.λ_I),
-    'SDH': MotionStructure(ExperimentConfig.glo_SDH, ExperimentConfig.λ_I)
+    'SDH': MotionStructure(ExperimentConfig.glo_H, ExperimentConfig.λ_I)
 }
 
 

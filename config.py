@@ -1,8 +1,14 @@
 import pylab as pl
 import numpy as np
+from pathlib import Path
 
+root = Path(__file__).parent
 fps = 50.
-dev = False
+verbose = True
+
+
+def seconds2frames(seconds: float):
+    return int(round(seconds * fps))
 
 
 class DisplayConfig:
@@ -49,12 +55,16 @@ class DisplayConfig:
 
 
 class ExperimentConfig:
-    seconds2frames = lambda seconds: int(round(seconds * fps))
+    n_trials_exp1 = 200
+    n_trials_exp2 = 100
+    n_dots = 3
+    permutations = [[0, 1, 2], [1, 2, 0], [2, 0, 1]]    # 3 permutations of 3 dots, assuming within-cluster symmetry.
+    # 3 dots can have 6 permutations, but it is unnecessary to distinguish between the two clustered dots.
     delay = seconds2frames(0.5)
-    duration = seconds2frames(4.5)  # 4.5s -> ~25+15 min
+    duration = seconds2frames(4.5)  # 4.5s -> ~25+15 min / 200 trials
     λ_T = 2.
     λ_I = 1 / 4
-    glo_SDH = 3 / 4
+    glo_H = 3 / 4
     glo_exp2 = [0.00, 0.20, 0.35, 0.55, 0.75]
 
 

@@ -1,25 +1,20 @@
-from config import SimulationConfig as sim
-from utils.data import load_data
-from stimuli.motion_structure import MotionStructure
 import numpy as np
 from numpy.linalg import inv, det
 
-from time import time
-import csv
+from config import SimulationConfig as SimConfig, ExperimentConfig as ExpConfig
+from stimuli.motion_structure import MotionStructure
 
 
 class MotionStructureKalmanFilter:
-    def __init__(self, structure, z_0, σ_R=0.):
+    def __init__(self, structure, z_0, σ_obs=0.):
         """
-
-        :param structure:
+        Kalman filter for motion structure identification.
+        :param structure: Structure of the motion.
         :type  structure: MotionStructure
-        :param z_0:
+        :param z_0: Initial state of the motion.
         :type  z_0: numpy.ndarray
-        :param σ_R:
-        :type  σ_R: float
-        :param whiten:
-        :type  whiten: bool
+        :param σ_obs: Observation noise.
+        :type  σ_obs: float
         """
         n, n_v = structure.n, structure.n_v()  # n locations, m velocities
         n_z = n + n_v
@@ -28,7 +23,7 @@ class MotionStructureKalmanFilter:
         self.Q = D @ D.T                     # Covariance of the process noise Q_t = Q * dt
         self.H = np.zeros((n, n_z))          # Observation model H_t = H
         self.H[:n, :n] = np.eye(n)           # Only locations are observable
-        self.R = σ_R ** 2 * np.eye(n)        # Covariance of the observation noise R_t = R
+        self.R = σ_obs ** 2 * np.eye(n)        # Covariance of the observation noise R_t = R
         assert len(z_0) == n_z, f"Error: Expect initial state z_0 (length: {len(z_0)}) to have length {n_z}!"
         self.z = z_0                         # Initialize the hidden state with true initial state
         self.P = structure.τ_ω / 2 * self.Q  # The true initial state is sampled from the stationary distribution
@@ -64,83 +59,15 @@ class MotionStructureKalmanFilter:
         self.z[:self.n] %= 2 * np.pi
         self.P = (self.I - K @ self.H) @ self.P  # Updated (a posteriori) estimate covariance P_{t|t}
         dL = -(y.T @ S_inv @ y + np.log(det(S)) + self.L_const) / 2  # log-likelihood for the current observation
-        # from scipy.stats import multivariate_normal as mvn
-        # dL = np.log(mvn(mean=np.zeros(self.n), cov=S).pdf(y))  # inv(S) is already calculated
         return dL
 
 
-def apply_Kalman_filter(x, t, structure, σ_R=0., reture_sum=True, implementation='sichao'):
-    n = 3
-    z0 = x[0] if sim.whiten else x[0][np.r_[:n, -n:0]]
-    L = []
-    if implementation == 'johannes':
-        from analysis.johannes_kalman_filter_code.classKalman import PhiKalmanFilterPermutation
-        f = PhiKalmanFilterPermutation(structure.L, structure.τ_ω, σ_R, whitespace=sim.whiten)
-        f.init_filter(z0)
-        for i in range(1, len(t)):
-            f.propagate_to_time(t[i])
-            # print(f.propagated_variables["mu_hat"][:n], x[i][:n])
-            f.integrate_observation(x[i])
-            L.append(np.log(f.observation_likelihood(x[i])))
-    elif implementation == 'sichao':
-        f = MotionStructureKalmanFilter(structure, z0, σ_R)
-        for i in range(1, len(t)):
-            dt = t[i] - t[i - 1]
-            f.predict(dt)
-            # print(f.H @ f.z, x[i][:n])
-            L.append(f.update(x[i][:n]))
-    if reture_sum:
-        return sum(L)
-    else:
-        return L
-
-
-def apply_Kalman_filters(x, t, structures, σ_R=0.):
-    L = np.array([apply_Kalman_filter(x, t, structures[s], σ_R) for s in structures])
-    return L.sum(axis=1)
-
-
-def apply_Kalman_filter_on_experiment(file, structures, σ_R=0., σ_x=0., repeats=1):
-    data = load_data(file)
-    filename = file[:-4]
-    print(filename)
-    # logger = Logger(filename + '.llv')
-    with open(f'../data/{filename}_σ={σ_R}.csv', 'w') as csvfile:
-        keys = ['IND', 'GLO', 'CLU_012', 'CLU_120', 'CLU_201', 'SDH_012', 'SDH_120', 'SDH_201', 'ground_truth', 'choice', 'confidence']
-        writer = csv.DictWriter(csvfile, fieldnames=keys)
-        writer.writeheader()
-
-        for trial in data:
-            for _ in range(repeats):
-                x, t = trial['φ'][3:], trial['t'][3:]
-                x = np.random.normal(loc=x, scale=σ_x)
-                vals = list(apply_filters_on_trial(x, t, σ_R, structures))
-                vals.append(trial['ground_truth'])
-                vals.append(trial['choice'])
-                vals.append(trial['confidence'])
-                # logger.log({keys[i]: vals[i] for i in range(len(keys))})
-                # logger.dump()
-                writer.writerow({keys[i]: vals[i] for i in range(len(keys))})
-    # logger.close()
-
-
-if __name__ == '__main__':
-    np.set_printoptions(linewidth=150)
-    # file = '../data/sichao/pilot_sichao.dat'
-    file = '../data/exp1/sichao_0806/sichao_0806.dat'
-    t_s = time()
-    # for σ_R in []
-    glo = 3/4
-    λ_I = 1/4
-    apply_Kalman_filter_on_experiment(file, σ_R=0, σ_x=0, repeats=1, structures={
-        'IND': MotionStructure(1, 2),
-        'GLO': MotionStructure(1, λ_I),
-        'CLU_012': MotionStructure(0, λ_I, permutation=[0, 1, 2]),
-        'CLU_120': MotionStructure(0, λ_I, permutation=[1, 2, 0]),
-        'CLU_201': MotionStructure(0, λ_I, permutation=[2, 0, 1]),
-        'SDH_012': MotionStructure(glo, λ_I, permutation=[0, 1, 2]),
-        'SDH_120': MotionStructure(glo, λ_I, permutation=[1, 2, 0]),
-        'SDH_201': MotionStructure(glo, λ_I, permutation=[2, 0, 1]),
-    })
-    print(time() - t_s)
-
+def apply_kalman_filter(x: np.ndarray, t: np.ndarray, structure: MotionStructure, σ_obs: float = 0.):
+    n = ExpConfig.n_dots
+    L = 0
+    f = MotionStructureKalmanFilter(structure, x[0] if SimConfig.whiten else x[0][np.r_[:n, -n:0]], σ_obs)
+    for i in range(1, len(t)):
+        dt = t[i] - t[i - 1]
+        f.predict(dt)
+        L += f.update(x[i][:n])
+    return L
