@@ -48,5 +48,4 @@ class DataExp1(Data):
         return np.array(matches)
 
     def score(self):
-        # return self._score(self.df.loc[self.idx])
-        return self._score(self.apply_kalman_filters())
+        return self._score(self.df.loc[self.idx])

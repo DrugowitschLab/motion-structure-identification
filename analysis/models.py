@@ -139,7 +139,7 @@ class BiasFreeChoiceModel(BayesianIdealObserver):
         Free parameters: β.
         Fixed parameters: σ_obs, π_L. """
     π_L = π_L_shared            # Inject lapse probability
-    β = 0.1                     # Initial guess of β
+    β = 0.1                    # Initial guess of β
     name: str = 'Bias-free'
     marker: str = 's'
     color: str = 'y'
